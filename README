@@ -1,0 +1,25 @@
+This a very simple (and ugly looking) UI to edit Solr (http://lucene.apache.org/solr/) indexes.
+
+The source is still messy as I didn't know what I wanted from the start. Read it at your own risk.
+
+Usage:
+
+- Run with bin/helioscope or bin/helioscope.bat
+- Choose your index with a url like http://localhost:8093/solr (append /coreName for multi-cores)
+- Click Run
+- Click a item in left panel
+- Edit it in right panel. It must be valid XML.
+- 
+
+A few planned features: 
+
+- Editor
+  - Adding missing fields or more multi-valueds
+  - Non-saved modification indicator
+  - Saving backups of the originals before updating
+  - Opening a new editor for very large field values, perhaps resolving the XML entities
+  - Saving all  
+  - XML Syntax Highlight
+  - A form view
+  
+  
