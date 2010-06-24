@@ -27,12 +27,12 @@ abstract class View extends SimpleSwingApplication {
 	    }
   }
   
-  val excClicked: (() => Unit) 
+  val runClicked: (() => Unit) 
   val treeClicked: (() => Unit) 
   val updClicked: (() => Unit)  
   
   def top = new MainFrame {
-	title = "Helioscope - The Solr data editor"
+	title = "Helioscope - The Solr query and editor"
     
 	contents = new SplitPane(Orientation.Vertical, new ScrollPane(tree),
 	new BorderPanel { 
@@ -51,7 +51,7 @@ abstract class View extends SimpleSwingApplication {
 			contents+=new Button("Run")  {
 				reactions += {
 		          case ButtonClicked(_) => {
-		         	  excClicked()
+		         	  runClicked()
 		          }
 		        }
 			}
@@ -63,7 +63,7 @@ abstract class View extends SimpleSwingApplication {
    
 }
 
-object TheView extends View {
+object View extends View {
 	import scala.xml._
 	//import solr._
 	import javax.swing.tree._
@@ -71,16 +71,12 @@ object TheView extends View {
 	val solr = choosenServer	
 	
 	def choosenServer = {
-		Config.showServerDialog match {
-			case Some(server @ _) =>
-				new Solr(server)
-			case _ =>
-				System.exit(1);
-				new Solr(""); // Ugly work-around
-		}
+		val choice = Config.showServerDialog
+		// Must exist a better way to do that
+		new Solr(choice.getOrElse({ System.exit(1); ""}))		
 	}
 	
-	val excClicked = () => { 
+	val runClicked = () => { 
 		val res = solr.queryXml(input.text)
 		println("executed: "+input.text+" returned "+res.size)
 		val queryNode = new DMTN(input.text)
