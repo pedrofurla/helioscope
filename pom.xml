@@ -71,7 +71,7 @@
               </platforms>
               <programs>
                 <program>
-                  <mainClass>com.nowhere.helioscope.TheView</mainClass>
+                  <mainClass>com.nowhere.helioscope.View</mainClass>
                   <name>helioscope</name>
                 </program>
               </programs>
