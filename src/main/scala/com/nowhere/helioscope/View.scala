@@ -164,3 +164,9 @@ object View extends View {
 	}
 }
 
+object Run {
+	def main(args: Array[String]):Unit = {
+		View.main(args)
+	}
+}
+
