@@ -1,6 +1,12 @@
-This a very simple (and ugly looking) UI to edit Solr (http://lucene.apache.org/solr/) indexes.
+This is a very simple (and ugly looking) UI to edit Solr (http://lucene.apache.org/solr/) indexes.
 
 The source is still messy as I didn't know what I wanted from the start. Read it at your own risk.
+
+Requirements:
+^^^^^^^^^^^^
+	- Java 1.6
+	- Access to a Solr instance
+
 
 Usage:
 
