@@ -8,12 +8,20 @@ Requirements:
 	- Access to a Solr instance
 
 
-Usage:
+Building:
+^^^^^^^^
+	- mvn package
 
-- Run with bin/helioscope or bin/helioscope.bat
-- Choose your index with a url like http://localhost:8093/solr (append /coreName for multi-cores)
+Usage:
+^^^^^
+
+- To Run the distribution execute:
+		- Bash: bin/helioscope
+		- Windows: bin/helioscope.bat
+- To run after building put target/helioscope-<version>-SNAPSHOT/ before the previous itens.
+- Choose your index using a url like http://localhost:8093/solr (append /coreName for multi-cores)
 - Click Run
-- Click a item in left panel
+- Click a item on left panel
 - Edit it in right panel. It must be valid XML.
 - 
 
