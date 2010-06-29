@@ -14,13 +14,10 @@ trait GenericTreeNode[T] {
 	def setParent(node : GenericTreeNode[T])
 }
 
+//class MyTreeNode[T] extends DefaultMutableTreeNode with GenericTreeNode[T]
+
 class GenericTreeComponent[N <: TreeNode : Manifest, M <: TreeModel] extends Component with Publisher {
 	override lazy val peer: JTree = new JTree() with SuperMixin {}
-	
-	//var model:DefaultTreeModel = _
-	
-	//type MODEL
-	//type NODE = N
 	
 	def this(root: N) = {
 		this()		
@@ -43,11 +40,9 @@ class GenericTreeComponent[N <: TreeNode : Manifest, M <: TreeModel] extends Com
 	
 	def model = peer.getModel
 	def model_=(model:M) = peer.setModel(model)
-	
-	// TODO put into DefaultTreeComponent
+		
 	def expandNode(node:N):Unit = expandPath(TreePath(node))
-	def scrollPathToVisible(node:N) = 
-		peer.scrollPathToVisible(TreePath(node));
+	def scrollPathToVisible(node:N) = peer.scrollPathToVisible(TreePath(node));
 	
 	peer.addTreeSelectionListener(new TreeSelectionListener {
 		def	valueChanged(e: TreeSelectionEvent) = {

@@ -4,23 +4,38 @@ import scala.swing._
 import scala.swing.event._
 import java.awt.Dimension
 
-import javax.swing.tree.{ DefaultMutableTreeNode => DMTN }
+//import javax.swing.tree.{ DefaultMutableTreeNode => DMTN }
 import scala.collection.mutable._
+
+import com.nowhere.helioscope.{ ScalaDefaultTreeNode => SDTN }
 
 abstract class View extends SimpleSwingApplication { view =>
   val solr:Solr ;
-  val editor = new EditorPane("text/plain","")
-  val input = new TextField("*:*")
+  
   lazy val fieldsDialog = new FieldsDialog(solr.schema.editable)
-    
-  val queries = new DMTN("Queries") 
-  val tree = new TreeComponent(queries) { 
+
+  // Editor needs to be encapsulated to properly deals with ValueChangedEvent  
+  //private[this] // too lazy to do now 
+  val editor = new EditorPane("text/plain","") // TODO Make private[this]  
+  val input = new TextField("*:*")    
+  val queries = new SDTN(new Nodes.Root)
+  val tree = new DefaultTreeComponent[Nodes.Node](queries) { 
 	  showsRootHandles = true
 	  selectionMode = TreeSelectionMode.Single
-  }
-  
+  }  
   val updateBtn = new Button("Upd")
   val runBtn = new Button("Run") 
+  
+  // editor 
+  private var ignoreEditor = false
+  
+  def editorText_=(s:String) = {
+	  ignoreEditor=true
+	  editor.text = s
+	  ignoreEditor=false
+  }
+  def editorText = editor.text
+  
   
   def top = new MainFrame {
 	title = "Helioscope - The Solr query and editor"
@@ -39,21 +54,47 @@ abstract class View extends SimpleSwingApplication { view =>
       layout(box) = BorderPanel.Position.Center      
     } ) { resizeWeight=0.5 }
   } 
-
+  
   val runClicked: (() => Unit) 
   val treeClicked: (() => Unit) 
   val updClicked: (() => Unit) 
   val editorEdited: (() => Unit)  
   
   reactions += {
-	  case ButtonClicked(`runBtn`) => println("Run")
-	  case ButtonClicked(`updateBtn`) => println("Upd")
-	  case SelectionChanged(`tree`) => println("Selected")
-	  case ValueChanged(`editor`) => println("Edited")
+	  case ButtonClicked(`runBtn`) => runClicked()
+	  case ButtonClicked(`updateBtn`) => updClicked()
+	  case SelectionChanged(`tree`) => treeClicked()
+	  case v@ValueChanged(`editor`) => if(!ignoreEditor) editorEdited() 
   }
+  
+  editor.enabled = false
+  updateBtn.enabled = false
   
   listenTo(runBtn,updateBtn,editor,tree)
   
+}
+
+object Nodes {
+	sealed abstract class Node {
+		val isRoot = false
+		val isQuery = false
+		val isResult = false
+	}
+	
+	case class Root extends Node {
+		override val isRoot = true
+		override def toString = "Queries" 
+	}
+	
+	case class Query(query:String) extends Node {
+		override val isQuery=true
+	}
+	
+	case class Result(id:String,result:Solr#SolrResultVO) extends Node {
+		override val isResult=true
+		override def toString = id + (if(changed) "*" else "")
+		var changed = false		
+	}
 }
 
 object View extends View {
@@ -62,6 +103,13 @@ object View extends View {
 	import javax.swing.tree._
 	
 	val solr = choosenServer	
+	
+	def node = tree.lastSelectedPathComponent
+	def nodeVal = node.value
+	def nodeVal_=(n:Nodes.Node) = node.value = n 
+	
+	def updatable(b:Boolean) = updateBtn.enabled = b
+	def editable(b:Boolean) = editor.enabled = b
 	
 	def choosenServer = {
 		val choice = Config.showServerDialog
@@ -72,45 +120,54 @@ object View extends View {
 	val runClicked = () => { 
 		val res = solr.queryXml(input.text)
 		println("executed: "+input.text+" returned "+res.size)
-		val queryNode = new DMTN(input.text)
+		val queryNode = new SDTN(Nodes.Query(input.text))
 		for(x <- res ) {
-			queryNode.add(new DMTN(x))
+			queryNode.add(new SDTN(Nodes.Result(x.key,x)))
 		}
-		tree.model.asInstanceOf[DefaultTreeModel].insertNodeInto(queryNode, queries,  queries.getChildCount);
+		tree.model.insertNodeInto(queryNode, queries,  queries.getChildCount);
 		tree.expandNode(queryNode)
 		tree.scrollPathToVisible(queryNode)
 	}
 	
 	val treeClicked = () => {
 		println(tree.lastSelectedPathComponent)
-		// TODO this can be easily improved
-		tree.lastSelectedPathComponent match {
-			case node:DMTN => 
-				node.getUserObject match { 
-					case res:solr.SolrResultVO => editor.text = res.prettyPrint
-					case _ => 
-				}
+		editable(false)
+		updatable(false)
+		nodeVal match {
+			case nodeRes @ Nodes.Result(_, res @ _) => {
+				updatable(nodeRes.changed)
+				editable(true)
+				//editor.text = res.prettyPrint
+				editorText = res.prettyPrint
+			}
 			case _ => 
 		}
 	}
 	
-	val updClicked = () => {
-		tree.lastSelectedPathComponent match {
-			case node:DMTN => 
-				node.getUserObject match { 
-					case res:solr.SolrResultVO => {
-						println(res.key); 
-						solr.updateXml(editor.text,res.key); 
-						()
-					}
-					case _ => 
-				}
+	val updClicked = () => {		
+		nodeVal match {
+			case Nodes.Result( key @ _, res @ _) => {
+				val xml = XML.loadString(editor.text)
+				println(res.key); 
+				solr.updateXml(editor.text,res.key); 
+				nodeVal = Nodes.Result(key,solr.SolrResultVO(xml,key))
+				tree.model.nodeChanged(node)
+				updatable(false)
+			}
 			case _ => 
-		} 
+		}
+		{}
 	}
 	
-	val editorEdited = () => {
-		
+	val editorEdited = () => {		
+		nodeVal match {
+			case resNode @ Nodes.Result(_,_) => {				
+				resNode.changed = true
+				updatable(true)
+				tree.model.nodeChanged(node)
+			}
+			case _ => 
+		}
 	}
 	
 	object Config {

@@ -6,33 +6,48 @@ import javax.swing.event._
 import scala.swing._
 import scala.swing.event._
 
-class TreeComponent extends Component with Publisher {
+trait ScalaTreeNode[+T] { self : DefaultMutableTreeNode =>
+	def value_=[A >: T](a:A):Unit = self.setUserObject(a)
+	def value:T = self.getUserObject.asInstanceOf[T]
+}
+
+class ScalaDefaultTreeNode[+T](t:T) extends DefaultMutableTreeNode(t) with ScalaTreeNode[T]
+/**
+ * A quick implementation of a JTtree, using DefaultTreeModel and ScalaDefaultTreeNode. 
+ * 
+ * @tparam T the type the nodes of this tree will be holding
+ */
+class DefaultTreeComponent[T] extends Component with Publisher { self =>
 	override lazy val peer: JTree = new JTree() with SuperMixin {}
-		
+	
+	type MODEL = DefaultTreeModel
+	type NODE = ScalaDefaultTreeNode[T]
+	
 	def this(root: TreeNode) = {
 		this()		
-		peer.setModel(new DefaultTreeModel(root))
+		peer.setModel(new MODEL(root))
 	}
 	
 	def expandPath(path:TreePath):Unit = peer.expandPath(path)
-	def expandPath(path:Array[TreeNode]):Unit = expandPath(new TreePath(path.asInstanceOf[Array[Object]]))
-	
-	// TODO put into DefaultTreeComponent
-	def expandNode(node:TreeNode):Unit = expandPath(model.asInstanceOf[DefaultTreeModel].getPathToRoot(node))
-	def scrollPathToVisible(node:TreeNode) = peer.scrollPathToVisible(new TreePath(model.asInstanceOf[DefaultTreeModel].getPathToRoot(node)));
-	
-	def selectionMode = peer.getSelectionModel().getSelectionMode
+	def expandPath(nodes:Array[TreeNode]):Unit = 
+		expandPath(new TreePath(nodes.asInstanceOf[Array[Object]])) // Not using the .asInstanceOf[Array[Object]] here
+																	// causes a java.lang.ClassCastException (why!?)
+		
+	def selectionMode = TreeSelectionMode(peer.getSelectionModel().getSelectionMode)
 	def selectionMode_=(mode:TreeSelectionMode.Value) = peer.getSelectionModel().setSelectionMode(mode.id)	
 	def showsRootHandles = peer.getShowsRootHandles
 	def showsRootHandles_=(shows:Boolean) = peer.setShowsRootHandles(shows)	
-	def model = peer.getModel
-	def model_=(model:TreeModel) = peer.setModel(model)
+	def model = peer.getModel.asInstanceOf[MODEL]
+	def model_=(model:MODEL) = peer.setModel(model)
 	
-	def lastSelectedPathComponent = peer.getLastSelectedPathComponent
+	def lastSelectedPathComponent = peer.getLastSelectedPathComponent.asInstanceOf[NODE]
 	
+	def expandNode(node:NODE):Unit = expandPath(model.getPathToRoot(node))
+	def scrollPathToVisible(node:NODE) = peer.scrollPathToVisible(new TreePath(model.getPathToRoot(node)));
+		
 	peer.addTreeSelectionListener(new TreeSelectionListener {
 		def	valueChanged(e: TreeSelectionEvent) = {
-			publish(new SelectionChanged(TreeComponent.this))
+			publish(new SelectionChanged(self))
 		}
 	})
 }
