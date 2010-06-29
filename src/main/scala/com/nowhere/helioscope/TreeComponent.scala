@@ -8,9 +8,7 @@ import scala.swing.event._
 
 class TreeComponent extends Component with Publisher {
 	override lazy val peer: JTree = new JTree() with SuperMixin {}
-	
-	//var model:DefaultTreeModel = _
-	
+		
 	def this(root: TreeNode) = {
 		this()		
 		peer.setModel(new DefaultTreeModel(root))
@@ -21,18 +19,16 @@ class TreeComponent extends Component with Publisher {
 	
 	// TODO put into DefaultTreeComponent
 	def expandNode(node:TreeNode):Unit = expandPath(model.asInstanceOf[DefaultTreeModel].getPathToRoot(node))
+	def scrollPathToVisible(node:TreeNode) = peer.scrollPathToVisible(new TreePath(model.asInstanceOf[DefaultTreeModel].getPathToRoot(node)));
 	
 	def selectionMode = peer.getSelectionModel().getSelectionMode
-	def selectionMode_=(mode:TreeSelectionMode.Value) = peer.getSelectionModel().setSelectionMode(mode.id)
-	def lastSelectedPathComponent = peer.getLastSelectedPathComponent
-	
+	def selectionMode_=(mode:TreeSelectionMode.Value) = peer.getSelectionModel().setSelectionMode(mode.id)	
 	def showsRootHandles = peer.getShowsRootHandles
-	def showsRootHandles_=(shows:Boolean) = peer.setShowsRootHandles(shows)
-	
+	def showsRootHandles_=(shows:Boolean) = peer.setShowsRootHandles(shows)	
 	def model = peer.getModel
 	def model_=(model:TreeModel) = peer.setModel(model)
 	
-	def scrollPathToVisible(node:TreeNode) = peer.scrollPathToVisible(new TreePath(model.asInstanceOf[DefaultTreeModel].getPathToRoot(node)));
+	def lastSelectedPathComponent = peer.getLastSelectedPathComponent
 	
 	peer.addTreeSelectionListener(new TreeSelectionListener {
 		def	valueChanged(e: TreeSelectionEvent) = {

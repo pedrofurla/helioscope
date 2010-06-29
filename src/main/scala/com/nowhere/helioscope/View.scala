@@ -7,12 +7,9 @@ import java.awt.Dimension
 import javax.swing.tree.{ DefaultMutableTreeNode => DMTN }
 import scala.collection.mutable._
 
-abstract class View extends SimpleSwingApplication {
+abstract class View extends SimpleSwingApplication { view =>
   val solr:Solr ;
-  val editor = { 
-	val e = new EditorPane("text/plain","") 
-  	e  	
-  }
+  val editor = new EditorPane("text/plain","")
   val input = new TextField("*:*")
   lazy val fieldsDialog = new FieldsDialog(solr.schema.editable)
     
@@ -20,16 +17,10 @@ abstract class View extends SimpleSwingApplication {
   val tree = new TreeComponent(queries) { 
 	  showsRootHandles = true
 	  selectionMode = TreeSelectionMode.Single
-	  reactions += {
-	      case SelectionChanged(_) => {
-	     	  treeClicked()
-	      }
-	    }
   }
   
-  val runClicked: (() => Unit) 
-  val treeClicked: (() => Unit) 
-  val updClicked: (() => Unit)  
+  val updateBtn = new Button("Upd")
+  val runBtn = new Button("Run") 
   
   def top = new MainFrame {
 	title = "Helioscope - The Solr query and editor"
@@ -40,27 +31,29 @@ abstract class View extends SimpleSwingApplication {
 		contents+= new ScrollPane(editor)
 		contents+= new BoxPanel(Orientation.Horizontal) {
 			maximumSize = new Dimension(300,100)
-			contents+=new Button("Upd")  {
-				reactions += {
-		          case ButtonClicked(_) => {
-		         	  updClicked()
-		          }
-		        }
-			}
+			contents+=updateBtn
 			contents+=input
-			contents+=new Button("Run")  {
-				reactions += {
-		          case ButtonClicked(_) => {
-		         	  runClicked()
-		          }
-		        }
-			}
+			contents+=runBtn
 		}		
       }
       layout(box) = BorderPanel.Position.Center      
     } ) { resizeWeight=0.5 }
   } 
-   
+
+  val runClicked: (() => Unit) 
+  val treeClicked: (() => Unit) 
+  val updClicked: (() => Unit) 
+  val editorEdited: (() => Unit)  
+  
+  reactions += {
+	  case ButtonClicked(`runBtn`) => println("Run")
+	  case ButtonClicked(`updateBtn`) => println("Upd")
+	  case SelectionChanged(`tree`) => println("Selected")
+	  case ValueChanged(`editor`) => println("Edited")
+  }
+  
+  listenTo(runBtn,updateBtn,editor,tree)
+  
 }
 
 object View extends View {
@@ -115,7 +108,11 @@ object View extends View {
 			case _ => 
 		} 
 	}
+	
+	val editorEdited = () => {
 		
+	}
+	
 	object Config {
 		import scala.io._
 		import java.io._
