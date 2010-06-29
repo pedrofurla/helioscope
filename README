@@ -29,7 +29,6 @@ A few planned features:
 
 - Editor
   - Adding missing fields or more multi-valueds
-  - Non-saved modification indicator
   - Saving backups of the originals before updating
   - Opening a new editor for very large field values, perhaps resolving the XML entities
   - Saving all  
