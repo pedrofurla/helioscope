@@ -9,6 +9,8 @@ import scala.collection.mutable._
 
 import com.nowhere.helioscope.{ ScalaDefaultTreeNode => SDTN }
 
+import commons._
+
 abstract class View extends SimpleSwingApplication { view =>
   val solr:Solr ;
   
@@ -241,6 +243,7 @@ object View extends View {
 
 object Run {
 	def main(args: Array[String]):Unit = {
+		info("Started")
 		View.main(args)
 	}
 }

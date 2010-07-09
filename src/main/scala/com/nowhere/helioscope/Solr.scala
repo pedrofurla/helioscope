@@ -68,27 +68,15 @@ class Solr(val url:String) {
 			val value:Object = if(doc.containsKey(fName))
 			 	  doc.get(fName).getValue match {
 			 	  	case v : java.util.ArrayList[String] =>  {
-			 	  		//println("list:" +v)
-			 	  		//val newList = new java.util.ArrayList[String]()
-			 	  		//newList.addAll(v)
-			 	  		//newList.add(f.text) 
-			 	  		//newList
 			 	  		f.text
 			 	  	}
-			 	  	case v @ _ => { 
-			 	  		//println("firstRep:" +v)
-			 	  		//val l = new java.util.ArrayList[String]; 
-			 	  		//l.add(v.toString); 
-			 	  		//l.add(f.text)
-			 	  		//l 
+			 	  	case v @ _ => {
 			 	  		f.text
 			 	  	}
 			      }
 			  else f.text
-			println("Adding field: "+fName);
-			//if(fName == "imageFileUrl") println("Adding: "+fName + " with value: " + value)
+			//println("Adding field: "+fName);
 			doc.addField(fName,value)
-			//if(fName == "imageFileUrl") println("Added:" + doc.get(fName))
 		}
 		server.add(doc);
 		server.commit;
