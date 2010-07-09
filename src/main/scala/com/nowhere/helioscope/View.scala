@@ -55,14 +55,35 @@ abstract class View extends SimpleSwingApplication { view =>
     } ) { resizeWeight=0.5 }
   } 
   
+  def busyCursor = {
+	  import java.awt.Cursor
+	  import java.awt.Cursor._
+	  top.contents(0).cursor= new Cursor(WAIT_CURSOR)
+	  //runBtn.cursor= new Cursor(WAIT_CURSOR)
+  }
+  def defaultCursor = {
+	  import java.awt.Cursor
+	  import java.awt.Cursor._
+	  //top.contents(0).cursor= new Cursor(DEFAULT_CURSOR)
+	  runBtn.cursor= new Cursor(DEFAULT_CURSOR)
+  }
+  
   val runClicked: (() => Unit) 
   val treeClicked: (() => Unit) 
   val updClicked: (() => Unit) 
   val editorEdited: (() => Unit)  
   
   reactions += {
-	  case ButtonClicked(`runBtn`) => runClicked()
-	  case ButtonClicked(`updateBtn`) => updClicked()
+	  case ButtonClicked(`runBtn`) => {
+	 	  //Swing.onEDT(busyCursor)
+	 	  runClicked() 
+	 	  //Swing.onEDT(defaultCursor)
+	  }
+	  case ButtonClicked(`updateBtn`) => {
+	 	  //busyCursor; 
+	 	  updClicked(); 
+	 	  //defaultCursor;
+	  }
 	  case SelectionChanged(`tree`) => treeClicked()
 	  case v@ValueChanged(`editor`) => if(!ignoreEditor) editorEdited() 
   }
