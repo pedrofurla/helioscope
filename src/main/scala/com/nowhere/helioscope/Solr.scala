@@ -1,20 +1,22 @@
 package com.nowhere.helioscope
 
+import scala.xml._
+
 object Solr {
 	val schemaUrlSuffix = "admin/file/?file=schema.xml"
 	
 	case class SolrField(val name:String, val `type`:String, 
 			val indexed:Boolean, val stored:Boolean, val multiValued:Boolean)
 	case class SolrSchema(val key:SolrField , val fields:List[SolrField]) {
-		val names = fields.map { _.name }
-		lazy val stored = fields.filter( _.stored )
-		lazy val indexed = fields.filter( _.indexed )
-		lazy val editable = fields.filter( f => f.stored || f.indexed)
+		def names = fields.map { _.name }
+		def storeds = fields.filter( _.stored )
+		def indexeds = fields.filter( _.indexed )
+		def editables = fields.filter( f => f.stored || f.indexed)
+		def multiValueds = fields.filter( _.indexed )
 		def byName(name:String) = fields find { _.name == name } 
 	}
 	
 	object SolrField {
-		import scala.xml._
 		def apply(fieldXml : Node):SolrField = {
 			val f = fieldXml
 			SolrField((f \ "@name").text.trim, 
@@ -30,7 +32,6 @@ class Solr(val url:String) {
 	
 	import org.apache.solr.client.solrj._
 	import org.apache.solr.client.solrj.impl._
-	import scala.xml._
 	import Solr._
 	
 	lazy val server = new CommonsHttpSolrServer( url );
@@ -89,24 +90,15 @@ class Solr(val url:String) {
 		val xml = XML.loadString(x);
 		for(f <- xml \\ "f" ) {
 			val fName = (f \ "@name").text
-			val value:Object = if(doc.containsKey(fName))
-			 	  doc.get(fName).getValue match {
-			 	  	case _ : java.util.ArrayList[String] =>  f.text
-			 	  	case _ => f.text
-			      }
-			  else f.text
-			doc.addField(fName,value)
+			doc.addField(fName,f.text)
 		}
 		server.add(doc);
 		server.commit;
 	}
-
-	
 	
 	case class SolrResultVO(val doc:NodeSeq, val key:String, val missing:List[SolrField]=List.empty) {
 		override def toString = uniqueKey + ": " + key
 		private val pp = new PrettyPrinter(80,5)
-		lazy val prettyPrint = pp.formatNodes(doc)
-		
+		lazy val prettyPrint = pp.formatNodes(doc)		
 	}
 }

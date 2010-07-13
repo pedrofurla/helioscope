@@ -14,7 +14,7 @@ import commons._
 abstract class View extends SimpleSwingApplication { view =>
   val solr:Solr ;
   
-  lazy val fieldsDialog = new FieldsDialog(solr.schema.editable)
+  lazy val fieldsDialog = new FieldsDialog(solr.schema.editables)
 
   // Editor needs to be encapsulated to properly deals with ValueChangedEvent  
   //private[this] // too lazy to do now 
