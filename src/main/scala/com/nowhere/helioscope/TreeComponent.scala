@@ -30,8 +30,7 @@ class DefaultTreeComponent[T] extends Component with Publisher { self =>
 	
 	def expandPath(path:TreePath):Unit = peer.expandPath(path)
 	def expandPath(nodes:Array[TreeNode]):Unit = 
-		expandPath(new TreePath(nodes.asInstanceOf[Array[Object]])) // Not using the .asInstanceOf[Array[Object]] here
-																	// causes a java.lang.ClassCastException (why!?)
+		expandPath(new TreePath(nodes.toArray[Object])) 
 		
 	def selectionMode = TreeSelectionMode(peer.getSelectionModel().getSelectionMode)
 	def selectionMode_=(mode:TreeSelectionMode.Value) = peer.getSelectionModel().setSelectionMode(mode.id)	

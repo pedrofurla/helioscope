@@ -2,17 +2,41 @@ package com.nowhere.helioscope
 
 object Solr {
 	val schemaUrlSuffix = "admin/file/?file=schema.xml"
+	
+	case class SolrField(val name:String, val `type`:String, 
+			val indexed:Boolean, val stored:Boolean, val multiValued:Boolean)
+	case class SolrSchema(val key:SolrField , val fields:List[SolrField]) {
+		val names = fields.map { _.name }
+		lazy val stored = fields.filter( _.stored )
+		lazy val indexed = fields.filter( _.indexed )
+		lazy val editable = fields.filter( f => f.stored || f.indexed)
+		def byName(name:String) = fields find { _.name == name } 
+	}
+	
+	object SolrField {
+		import scala.xml._
+		def apply(fieldXml : Node):SolrField = {
+			val f = fieldXml
+			SolrField((f \ "@name").text.trim, 
+					  (f \ "@type").text.trim, 
+					  (f \ "@indexed").text.trim.toLowerCase == "true", 
+					  (f \ "@stored").text.trim.toLowerCase  == "true", 
+					  (f \ "@multiValue").text.trim.toLowerCase  == "true")
+		}
+	}
 }
 
 class Solr(val url:String) {
-	import org.apache.solr.client.solrj.impl._
+	
 	import org.apache.solr.client.solrj._
+	import org.apache.solr.client.solrj.impl._
 	import scala.xml._
+	import Solr._
 	
 	lazy val server = new CommonsHttpSolrServer( url );
 	lazy val uniqueKey:String = schema.key.name
 	
-	lazy val schema = {			
+	lazy val schema = {
 		import scala.io._
 		val s = Source.fromURL( new java.net.URL(url + Solr.schemaUrlSuffix) )(Codec(Codec.ISO8859))
 		val x = XML.loadString(s.getLines().mkString)
@@ -67,42 +91,17 @@ class Solr(val url:String) {
 			val fName = (f \ "@name").text
 			val value:Object = if(doc.containsKey(fName))
 			 	  doc.get(fName).getValue match {
-			 	  	case v : java.util.ArrayList[String] =>  {
-			 	  		f.text
-			 	  	}
-			 	  	case v @ _ => {
-			 	  		f.text
-			 	  	}
+			 	  	case _ : java.util.ArrayList[String] =>  f.text
+			 	  	case _ => f.text
 			      }
 			  else f.text
-			//println("Adding field: "+fName);
 			doc.addField(fName,value)
 		}
 		server.add(doc);
 		server.commit;
 	}
 
-	case class SolrField(val name:String, val `type`:String, 
-			val indexed:Boolean, val stored:Boolean, val multiValued:Boolean)
-	case class SolrSchema(val key:SolrField , val fields:List[SolrField]) {
-		val names = fields.map { _.name }
-		lazy val stored = fields.filter( _.stored )
-		lazy val indexed = fields.filter( _.indexed )
-		lazy val editable = fields.filter( f => f.stored || f.indexed)
-		def byName(name:String) = fields find { _.name == name } 
-	}
 	
-	object SolrField {
-		import scala.xml._
-		def apply(fieldXml : Node):SolrField = {
-			val f = fieldXml
-			SolrField((f \ "@name").text.trim, 
-					  (f \ "@type").text.trim, 
-					  (f \ "@indexed").text.trim.toLowerCase == "true", 
-					  (f \ "@stored").text.trim.toLowerCase  == "true", 
-					  (f \ "@multiValue").text.trim.toLowerCase  == "true")
-		}
-	}
 	
 	case class SolrResultVO(val doc:NodeSeq, val key:String, val missing:List[SolrField]=List.empty) {
 		override def toString = uniqueKey + ": " + key

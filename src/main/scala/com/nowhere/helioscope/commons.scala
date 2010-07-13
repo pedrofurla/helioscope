@@ -9,6 +9,6 @@ object commons {
 	@elide(INFO)
 	def info(s:String*) = println("[INFO]" + s)
 	@elide(FINER)
-	def trace(s:String*) = println("[INFO]" + s)
+	def trace(s:String*) = println("[TRACE]" + s)
 	
 }

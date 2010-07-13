@@ -6,15 +6,10 @@ import scala.swing.event._
 trait UIElementUtils { self:Window =>
 	import java.awt.Dimension;
 	import java.awt.Toolkit;
-	def centerOnScreen = {
-		val screenSize = Toolkit.getDefaultToolkit().getScreenSize()
-		val windowSize = this.size
-		implicit def double2Int(x:Double) = x.toInt
-		val pos = new Dimension((screenSize.getWidth - windowSize.getWidth)/2,(screenSize.getHeight - windowSize.getHeight)/2)
-	}
+	
 }
 
-class ModalDialog extends Dialog /*with UIElementUtils*/ { dialog => 
+class ModalDialog extends Dialog { dialog => 
 	modal = true
 		
 	val borderPanel = new BorderPanel {		 
@@ -24,8 +19,7 @@ class ModalDialog extends Dialog /*with UIElementUtils*/ { dialog =>
 			contents ++ buttons
 			dialog.listenTo(buttons:_*)
 		}
-		layout(box) = BorderPanel.Position.South  
-		
+		layout(box) = BorderPanel.Position.South 		
 	}
 	contents = borderPanel
 	
@@ -50,10 +44,10 @@ class ModalDialog extends Dialog /*with UIElementUtils*/ { dialog =>
 	}	
 }
 
-class FieldsDialog(fields:List[Solr#SolrField]) extends ModalDialog {
+class FieldsDialog(fields:List[Solr.SolrField]) extends ModalDialog {
 	import scala.collection.mutable._
 	
-	abstract class MyCheckBox(text:String) extends CheckBox(text) { val field:Solr#SolrField }
+	abstract class MyCheckBox(text:String) extends CheckBox(text) { val field:Solr.SolrField }
 	val checkBoxes = new ArrayBuffer[MyCheckBox] 
 	val grid = new GridPanel(0,4) {
 		for(f <- fields) {
@@ -65,11 +59,11 @@ class FieldsDialog(fields:List[Solr#SolrField]) extends ModalDialog {
 	}
 	setCenterContents(grid)
 	
-	def disable(fields:List[Solr#SolrField])={
+	def disable(fields:List[Solr.SolrField])={
 		checkBoxes.filter{ x=> fields.contains( x.field) }.foreach { _.enabled=false } 
 	}
 	
-	def promptFields:List[Solr#SolrField] = {
+	def promptFields:List[Solr.SolrField] = {
 		show match {
 			case Some("Ok") =>
 				checkBoxes.filter { _.selected } map { _.field } toList
