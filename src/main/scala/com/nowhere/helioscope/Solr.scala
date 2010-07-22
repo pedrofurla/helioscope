@@ -89,8 +89,9 @@ class Solr(val url:String) {
 		val doc = new SolrInputDocument();
 		val xml = XML.loadString(x);
 		for(f <- xml \\ "f" ) {
+			val value = f.child.foldLeft("")( (acc,node) => acc + node.toString); 
 			val fName = (f \ "@name").text
-			doc.addField(fName,f.text)
+			doc.addField(fName,value)		
 		}
 		server.add(doc);
 		server.commit;
