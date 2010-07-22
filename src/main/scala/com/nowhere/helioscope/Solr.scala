@@ -59,9 +59,9 @@ class Solr(val url:String) {
 	
 	import java.text._
 	val sdf:SimpleDateFormat  = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");        
-	private def solrValue(o:Object) = o match {
+	private def solrValue(o:AnyRef) = o match {
 		case d : java.util.Date => sdf.format( d );
-		case _ => o
+		case _ => o.toString
 	}
 	
 	def queryXml(q:String) = {
@@ -71,7 +71,7 @@ class Solr(val url:String) {
 		val l = for(x <- r.getResults()) yield {			
 			val doc:NodeSeq = for(entry <- x.entrySet.toSeq) yield {
 				entry.getValue match {
-					case values:java.util.ArrayList[String] => {
+					case values:java.util.ArrayList[AnyRef] => {
 						<xml:group>
 							{ for(v <- values) yield <f name={entry.getKey}>{solrValue(v)}</f> }
 						</xml:group>
